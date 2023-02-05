@@ -115,6 +115,7 @@ class Sync:
         client_logger.info = patched_info
 
         client.start()
+        client.parse_mode = 'md'
         if config.get("use_takeout", False):
             for retry in range(3):
                 try:
@@ -181,6 +182,7 @@ class Sync:
                 date=m.date,
                 edit_date=m.edit_date,
                 content=sticker if sticker else m.raw_text,
+                content_md=sticker if sticker else m.text,
                 reply_to=m.reply_to_msg_id if m.reply_to and m.reply_to.reply_to_msg_id else None,
                 user=self._get_user(m.sender),
                 media=med

@@ -14,6 +14,7 @@ CREATE table messages (
     date TIMESTAMP NOT NULL,
     edit_date TIMESTAMP,
     content TEXT,
+    content_md TEXT,
     reply_to INTEGER,
     user_id INTEGER,
     media_id INTEGER,
@@ -44,7 +45,7 @@ User = namedtuple(
     "User", ["id", "username", "first_name", "last_name", "tags", "avatar"])
 
 Message = namedtuple(
-    "Message", ["id", "type", "date", "edit_date", "content", "reply_to", "user", "media"])
+    "Message", ["id", "type", "date", "edit_date", "content", "content_md", "reply_to", "user", "media"])
 
 Media = namedtuple(
     "Media", ["id", "type", "url", "title", "description", "thumb"])
@@ -140,7 +141,7 @@ class DB:
         cur = self.conn.cursor()
         cur.execute("""
             SELECT messages.id, messages.type, messages.date, messages.edit_date,
-            messages.content, messages.reply_to, messages.user_id,
+            messages.content, messages.content_md, messages.reply_to, messages.user_id,
             users.username, users.first_name, users.last_name, users.tags, users.avatar,
             media.id, media.type, media.url, media.title, media.description, media.thumb
             FROM messages
@@ -189,14 +190,15 @@ class DB:
     def insert_message(self, m: Message):
         cur = self.conn.cursor()
         cur.execute("""INSERT OR REPLACE INTO messages
-            (id, type, date, edit_date, content, reply_to, user_id, media_id)
-            VALUES(?, ?, ?, ?, ?, ?, ?, ?)""",
+            (id, type, date, edit_date, content, content_md, reply_to, user_id, media_id)
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (m.id,
                      m.type,
                      m.date.strftime("%Y-%m-%d %H:%M:%S"),
                      m.edit_date.strftime(
                          "%Y-%m-%d %H:%M:%S") if m.edit_date else None,
                      m.content,
+                     m.content_md,
                      m.reply_to,
                      m.user.id,
                      m.media.id if m.media else None)
@@ -208,7 +210,7 @@ class DB:
 
     def _make_message(self, m) -> Message:
         """Makes a Message() object from an SQL result tuple."""
-        id, typ, date, edit_date, content, reply_to, \
+        id, typ, date, edit_date, content, content_md, reply_to, \
             user_id, username, first_name, last_name, tags, avatar, \
             media_id, media_type, media_url, media_title, media_description, media_thumb = m
 
@@ -230,6 +232,7 @@ class DB:
                        date=date,
                        edit_date=edit_date,
                        content=content,
+                       content_md=content_md,
                        reply_to=reply_to,
                        user=User(id=user_id,
                                  username=username,
